@@ -4,18 +4,19 @@ public sealed class PowerPlanTweak : ITweak
 {
     private readonly IProcessRunner _runner;
     private readonly IElevatedOperations _elevated;
-    private readonly bool _isLaptop;
 
     public PowerPlanTweak(IProcessRunner runner, IElevatedOperations elevated, bool isLaptop)
     {
         _runner = runner;
         _elevated = elevated;
-        _isLaptop = isLaptop;
+        IsLaptop = isLaptop;
     }
+
+    public bool IsLaptop { get; set; }
 
     public string Id => "power-plan";
     public string Title => "Switch to the high-performance power plan";
-    public string Description => _isLaptop
+    public string Description => IsLaptop
         ? "Sets the High performance scheme (8c5e7fda-…). On a laptop this drains the battery faster and can run the fans harder. Undo puts the previous scheme back."
         : "Sets the High performance scheme (8c5e7fda-…). Undo puts the previous scheme back.";
     public TweakRisk Risk => TweakRisk.Caution;

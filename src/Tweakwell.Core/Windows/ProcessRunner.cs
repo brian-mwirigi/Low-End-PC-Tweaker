@@ -4,7 +4,7 @@ namespace Tweakwell;
 
 public sealed class ProcessRunner : IProcessRunner
 {
-    public ProcessRunResult Run(string fileName, string arguments, int timeoutMs = 15_000)
+    public ProcessRunResult Run(string fileName, string arguments, int timeoutMs = 3_000)
     {
         var start = new ProcessStartInfo
         {
@@ -18,6 +18,8 @@ public sealed class ProcessRunner : IProcessRunner
 
         using var process = Process.Start(start)
                             ?? throw new InvalidOperationException($"Could not start {fileName}.");
+        var stdout = process.StandardOutput.ReadToEndAsync();
+        var stderr = process.StandardError.ReadToEndAsync();
         if (!process.WaitForExit(timeoutMs))
         {
             try
@@ -32,6 +34,8 @@ public sealed class ProcessRunner : IProcessRunner
             return new ProcessRunResult(-1, "", $"Timed out after {timeoutMs} ms.");
         }
 
-        return new ProcessRunResult(process.ExitCode, process.StandardOutput.ReadToEnd(), process.StandardError.ReadToEnd());
+        stdout.Wait(500);
+        stderr.Wait(500);
+        return new ProcessRunResult(process.ExitCode, stdout.IsCompletedSuccessfully ? stdout.Result : "", stderr.IsCompletedSuccessfully ? stderr.Result : "");
     }
 }

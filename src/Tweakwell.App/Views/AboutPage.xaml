@@ -1,32 +1,35 @@
 <Page
     x:Class="Tweakwell.App.Views.AboutPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <ScrollViewer Padding="24">
-        <StackPanel Spacing="16" MaxWidth="720">
-            <TextBlock Text="About / Support" Style="{StaticResource TitleTextBlockStyle}" />
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource TwBgBrush}">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+        <StackPanel Padding="28,20,28,32" Spacing="18" MaxWidth="720" HorizontalAlignment="Center">
+            <TextBlock Text="About" Style="{StaticResource PageTitle}" />
             <TextBlock
-                Text="Tweakwell shows every change before it is applied, logs it, and reverses it when it can. It will not turn a 2010 laptop into a gaming rig."
-                TextWrapping="Wrap" />
-            <TextBlock
-                Text="Open source. No telemetry. No accounts. No ads. No bundled software. Admin is requested only for a restore point or a power-plan switch."
+                FontSize="16"
+                FontFamily="Segoe UI"
+                Foreground="{StaticResource TwTextBrush}"
                 TextWrapping="Wrap"
-                Opacity="0.8" />
+                Text="Every change is shown before it is applied, logged, and reversible. It will not turn a 2010 laptop into a gaming rig." />
+            <TextBlock
+                Style="{StaticResource PageLead}"
+                Text="Open source. No telemetry, accounts, ads, or bundled software. Admin is requested only for a restore point or a power-plan switch." />
 
-            <TextBlock Text="Tip" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <HyperlinkButton x:Name="CoffeeLink" Content="Buy Me a Coffee" />
-                <HyperlinkButton x:Name="MpesaLink" Content="M-Pesa" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <HyperlinkButton x:Name="CoffeeLink" Content="Buy Me a Coffee" Foreground="{StaticResource TwAmberBrush}" />
+                <HyperlinkButton x:Name="MpesaLink" Content="M-Pesa" Foreground="{StaticResource TwAmberBrush}" />
             </StackPanel>
-            <TextBlock x:Name="MpesaNote" TextWrapping="Wrap" Opacity="0.8" />
+            <TextBlock x:Name="MpesaNote" Style="{StaticResource PageLead}" />
 
-            <TextBlock Text="SmartScreen" Style="{StaticResource SubtitleTextBlockStyle}" />
+            <TextBlock Text="SmartScreen" Style="{StaticResource PageTitle}" FontSize="18" />
             <TextBlock
-                Text="The release exe is unsigned. Windows may warn on first run. That is reputation, not a detection. Check the SHA-256 on the GitHub Release and the VirusTotal link in the notes."
-                TextWrapping="Wrap"
-                Opacity="0.8" />
+                Style="{StaticResource PageLead}"
+                Text="The release exe is unsigned. Windows may warn on first run. That is reputation, not a detection. Check the SHA-256 on the GitHub Release." />
 
-            <HyperlinkButton x:Name="RepoLink" Content="github.com/brian-mwirigi/tweakwell" />
+            <HyperlinkButton x:Name="RepoLink" Content="github.com/brian-mwirigi/tweakwell" Foreground="{StaticResource TwAmberBrush}" />
         </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>

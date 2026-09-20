@@ -8,85 +8,103 @@ public sealed partial class ScanPage : Page
     public ScanPage()
     {
         InitializeComponent();
-        Loaded += (_, _) => RunScan();
+        Loaded += (_, _) => _ = RunScanAsync(force: false);
     }
 
-    private void Refresh_Click(object sender, RoutedEventArgs e) => RunScan();
+    private void Refresh_Click(object sender, RoutedEventArgs e) => _ = RunScanAsync(force: true);
 
-    private void RunScan()
+    private async Task RunScanAsync(bool force)
     {
-        StatusText.Text = "Scanning…";
-        var scan = App.Runtime.Scan();
-        StatusText.Text = scan.IsLaptop ? "Laptop detected. This scan did not change anything." : "This scan did not change anything.";
-
-        FindingsPanel.Children.Clear();
-        foreach (var finding in scan.Findings)
+        if (!force && App.Runtime.LastScan is { } cached)
         {
-            FindingsPanel.Children.Add(new InfoBar
-            {
-                Title = finding.Title,
-                Message = finding.Detail,
-                Severity = finding.Severity == FindingSeverity.Warning ? InfoBarSeverity.Warning : InfoBarSeverity.Informational,
-                IsOpen = true,
-                IsClosable = false,
-            });
+            Render(cached);
+            return;
         }
 
-        CpuText.Text = $"{scan.CpuName} · {scan.LogicalProcessors} logical processors";
-        RamText.Text = scan.MemorySummary;
-
-        GpuPanel.Children.Clear();
-        foreach (var gpu in scan.Gpus)
+        LeadText.Text = "Scanning…";
+        RefreshButton.IsEnabled = false;
+        try
         {
-            var kind = gpu.Kind switch
+            Render(await App.Runtime.ScanAsync());
+        }
+        catch (Exception ex)
+        {
+            LeadText.Text = "Scan failed: " + ex.Message;
+        }
+        finally
+        {
+            RefreshButton.IsEnabled = true;
+        }
+    }
+
+    private void Render(ScanResult scan)
+    {
+        LeadText.Text = scan.IsLaptop
+            ? "Laptop. This pass was read-only — registry, power plan, and disk are untouched."
+            : "This pass was read-only — registry, power plan, and disk are untouched.";
+
+        FindingsHost.Children.Clear();
+        foreach (var finding in scan.Findings)
+        {
+            FindingsHost.Children.Add(Theme.Finding(finding));
+        }
+
+        SpecGrid.Children.Clear();
+        Place(Theme.Spec("CPU", scan.CpuName, $"{scan.LogicalProcessors} logical processors"), 0, 0);
+        Place(Theme.Spec("RAM", scan.MemorySummary, "Installed memory, not available after Chrome."), 0, 1);
+
+        var gpuValue = scan.Gpus.Count == 0
+            ? "None reported"
+            : string.Join("\n", scan.Gpus.Select(g => g.Name));
+        var gpuHint = scan.Gpus.Count == 0
+            ? "WMI did not return a video controller."
+            : string.Join(" · ", scan.Gpus.Select(g => g.Kind switch
             {
                 GpuKind.Integrated => "integrated",
                 GpuKind.Dedicated => "dedicated",
                 _ => "unclassified",
-            };
-            GpuPanel.Children.Add(new TextBlock { Text = $"{gpu.Name} ({kind})", TextWrapping = TextWrapping.Wrap });
+            }));
+        Place(Theme.Spec("GPU", gpuValue, gpuHint), 0, 2);
+
+        var disks = scan.Disks.Count == 0
+            ? "Unknown"
+            : string.Join("\n", scan.Disks.Select(d => $"{d.Name} · {Theme.Media(d.Media)}"));
+        var vol = scan.Volumes.FirstOrDefault(v => v.Letter.StartsWith("C", StringComparison.OrdinalIgnoreCase))
+                  ?? scan.Volumes.FirstOrDefault();
+        var diskHint = vol is null
+            ? ""
+            : $"{vol.Letter} {FormatGb(vol.FreeBytes)} free of {FormatGb(vol.SizeBytes)}";
+        Place(Theme.Spec("Storage", disks, diskHint), 1, 0);
+
+        Place(Theme.Spec(
+            "Power plan",
+            string.IsNullOrWhiteSpace(scan.PowerPlanName) ? "Unknown" : scan.PowerPlanName,
+            string.IsNullOrWhiteSpace(scan.PowerPlanGuid) ? null : scan.PowerPlanGuid), 1, 1);
+
+        Place(Theme.Spec(
+            "Processes",
+            scan.ProcessCount.ToString(),
+            "Raw process count, not Settings background apps."), 1, 2);
+
+        var on = scan.StartupApps.Count(a => a.Enabled);
+        StartupCount.Text = $"{scan.StartupApps.Count} listed · {on} on";
+        StartupHost.Children.Clear();
+        foreach (var app in scan.StartupApps)
+        {
+            StartupHost.Children.Add(Theme.StartupRow(app));
         }
 
-        if (scan.Gpus.Count == 0)
+        if (scan.StartupApps.Count == 0)
         {
-            GpuPanel.Children.Add(new TextBlock { Text = "No GPU was reported by WMI." });
+            StartupHost.Children.Add(Theme.Body("No startup entries found in the user Run key or Startup folder.", muted: true));
         }
+    }
 
-        StoragePanel.Children.Clear();
-        foreach (var disk in scan.Disks)
-        {
-            StoragePanel.Children.Add(new TextBlock
-            {
-                Text = $"{disk.Name} · {disk.Media} · {disk.Bus}",
-                TextWrapping = TextWrapping.Wrap,
-            });
-        }
-
-        foreach (var volume in scan.Volumes)
-        {
-            StoragePanel.Children.Add(new TextBlock
-            {
-                Text = $"{volume.Letter}  {FormatGb(volume.FreeBytes)} free of {FormatGb(volume.SizeBytes)}",
-            });
-        }
-
-        PowerText.Text = string.IsNullOrEmpty(scan.PowerPlanGuid)
-            ? scan.PowerPlanName
-            : $"{scan.PowerPlanName} ({scan.PowerPlanGuid})";
-        ProcessText.Text = $"{scan.ProcessCount} processes (raw Process.GetProcesses count, not the Settings “background apps” list).";
-
-        StartupList.ItemsSource = scan.StartupApps.Select(a =>
-        {
-            var scope = a.Source switch
-            {
-                StartupSource.CurrentUserRun => "Current user",
-                StartupSource.LocalMachineRun => "All users (read-only here)",
-                StartupSource.StartupFolder => "Startup folder",
-                _ => a.Source.ToString(),
-            };
-            var state = a.Enabled ? "enabled" : "disabled";
-            return $"{a.Name} — {state} — {scope}\n{a.Command}";
-        }).ToList();
+    private void Place(Border card, int row, int column)
+    {
+        Grid.SetRow(card, row);
+        Grid.SetColumn(card, column);
+        SpecGrid.Children.Add(card);
     }
 
     private static string FormatGb(long bytes) => $"{bytes / (1024d * 1024d * 1024d):0.#} GB";

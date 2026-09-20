@@ -46,10 +46,23 @@ public sealed class ElevatedHelperClient : IElevatedOperations
                 return new ElevatedResult(false, "Could not start the elevated helper.");
             }
 
-            process.WaitForExit(60_000);
+            if (!process.WaitForExit(90_000))
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch (Exception)
+                {
+                    // Helper is abandoned; tweaks still apply.
+                }
+
+                return new ElevatedResult(false, "Elevated helper timed out. Tweaks will still apply.");
+            }
+
             if (!File.Exists(resultPath))
             {
-                return new ElevatedResult(false, process.ExitCode == 0
+                return new ElevatedResult(false, process.HasExited && process.ExitCode == 0
                     ? "Helper finished but wrote no result (UAC may have been cancelled)."
                     : "Administrator approval was declined or the helper failed.");
             }

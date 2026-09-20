@@ -1,74 +1,64 @@
 <Page
     x:Class="Tweakwell.App.Views.ScanPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Page.Resources>
-        <Style x:Key="CardBorder" TargetType="Border">
-            <Setter Property="Padding" Value="16" />
-            <Setter Property="CornerRadius" Value="8" />
-            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
-        </Style>
-    </Page.Resources>
-    <ScrollViewer Padding="24">
-        <StackPanel Spacing="16" MaxWidth="880">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource TwBgBrush}">
+    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <Grid>
+        <StackPanel Padding="28,20,28,32" Spacing="22" MaxWidth="980" HorizontalAlignment="Center">
             <Grid>
-                <StackPanel>
-                    <TextBlock Text="Scan" Style="{StaticResource TitleTextBlockStyle}" />
+                <StackPanel Spacing="4">
+                    <TextBlock Text="This machine" Style="{StaticResource PageTitle}" />
                     <TextBlock
-                        Text="Read-only. Nothing on this page writes the registry, power plan, or disk."
-                        Opacity="0.7"
-                        TextWrapping="Wrap"
-                        Margin="0,4,0,0" />
+                        x:Name="LeadText"
+                        Style="{StaticResource PageLead}"
+                        Text="Read-only. Tweakwell has not changed the registry, the power plan, or any files." />
                 </StackPanel>
                 <Button
                     x:Name="RefreshButton"
                     Content="Scan again"
+                    Style="{StaticResource GhostButton}"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Top"
                     Click="Refresh_Click" />
             </Grid>
 
-            <TextBlock x:Name="StatusText" Opacity="0.7" />
+            <StackPanel x:Name="FindingsHost" Spacing="10" />
 
-            <TextBlock Text="Findings" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <StackPanel x:Name="FindingsPanel" Spacing="8" />
-
-            <TextBlock Text="Hardware" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <Grid ColumnSpacing="12" RowSpacing="12">
+            <Grid x:Name="SpecGrid" ColumnSpacing="10" RowSpacing="10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <Border Grid.Column="0" Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="CPU" Opacity="0.6" />
-                        <TextBlock x:Name="CpuText" TextWrapping="Wrap" />
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="1" Style="{StaticResource CardBorder}">
-                    <StackPanel Spacing="4">
-                        <TextBlock Text="RAM" Opacity="0.6" />
-                        <TextBlock x:Name="RamText" TextWrapping="Wrap" />
-                    </StackPanel>
-                </Border>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
             </Grid>
-            <StackPanel Spacing="8">
-                <TextBlock Text="GPU" Opacity="0.6" />
-                <StackPanel x:Name="GpuPanel" Spacing="4" />
-                <TextBlock Text="Storage" Opacity="0.6" Margin="0,8,0,0" />
-                <StackPanel x:Name="StoragePanel" Spacing="4" />
-                <TextBlock Text="Power plan" Opacity="0.6" Margin="0,8,0,0" />
-                <TextBlock x:Name="PowerText" TextWrapping="Wrap" />
-                <TextBlock Text="Processes" Opacity="0.6" Margin="0,8,0,0" />
-                <TextBlock x:Name="ProcessText" TextWrapping="Wrap" />
-            </StackPanel>
 
-            <TextBlock Text="Startup apps" Style="{StaticResource SubtitleTextBlockStyle}" />
-            <TextBlock
-                Text="Local Machine entries are listed only. Disable them from Task Manager if you need to."
-                Opacity="0.7"
-                TextWrapping="Wrap" />
-            <ListView x:Name="StartupList" SelectionMode="None" />
+            <StackPanel Spacing="8">
+                <Grid>
+                    <TextBlock Text="Startup" Style="{StaticResource PageTitle}" FontSize="18" />
+                    <TextBlock
+                        x:Name="StartupCount"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource PageLead}" />
+                </Grid>
+                <TextBlock
+                    Style="{StaticResource PageLead}"
+                    Text="All-users entries are listed so you can see them. Only this-user items can be disabled from Tweaks." />
+                <Border
+                    Background="{StaticResource TwSurfaceBrush}"
+                    BorderBrush="{StaticResource TwLineBrush}"
+                    BorderThickness="1"
+                    CornerRadius="10"
+                    Padding="12,4">
+                    <StackPanel x:Name="StartupHost" />
+                </Border>
+            </StackPanel>
         </StackPanel>
+        </Grid>
     </ScrollViewer>
 </Page>

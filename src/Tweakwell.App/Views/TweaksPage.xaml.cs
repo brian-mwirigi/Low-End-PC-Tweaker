@@ -16,50 +16,72 @@ public sealed partial class TweaksPage : Page
     {
         TweakHost.Children.Clear();
         var catalog = App.Runtime.Catalog;
-        var scan = App.Runtime.LastScan ?? App.Runtime.Scan();
+        var scan = App.Runtime.LastScan ?? new ScanResult(
+            "Unknown",
+            Environment.ProcessorCount,
+            0,
+            [],
+            [],
+            [],
+            "Unknown",
+            "",
+            false,
+            0,
+            [],
+            []);
 
-        TweakHost.Children.Add(Card(catalog.PowerPlan));
-        TweakHost.Children.Add(Card(catalog.GameMode));
-        TweakHost.Children.Add(Card(catalog.GameBar));
-        TweakHost.Children.Add(Card(catalog.VisualEffects));
-        TweakHost.Children.Add(StartupCard(catalog.StartupApps, scan));
-        TweakHost.Children.Add(TempCard(catalog.TempClean));
-        TweakHost.Children.Add(ExeCard(catalog.DedicatedGpu, "Game exe for dedicated GPU"));
-        TweakHost.Children.Add(ExeCard(catalog.FullscreenOptimizations, "Game exe for fullscreen optimizations"));
+        TweakHost.Children.Add(Row(catalog.PowerPlan));
+        TweakHost.Children.Add(Row(catalog.GameMode));
+        TweakHost.Children.Add(Row(catalog.GameBar));
+        TweakHost.Children.Add(Row(catalog.VisualEffects));
+        TweakHost.Children.Add(Row(catalog.StartupApps, StartupExtra(catalog.StartupApps, scan)));
+        TweakHost.Children.Add(Row(catalog.TempClean, TempExtra(catalog.TempClean)));
+        TweakHost.Children.Add(Row(catalog.DedicatedGpu, ExeExtra(catalog.DedicatedGpu, "Game .exe")));
+        TweakHost.Children.Add(Row(catalog.FullscreenOptimizations, ExeExtra(catalog.FullscreenOptimizations, "Game .exe")));
     }
 
-    private static Border Card(ITweak tweak, UIElement? extra = null)
+    private Border Row(ITweak tweak, UIElement? extra = null)
     {
-        var toggle = new ToggleSwitch { IsOn = tweak.IsSelected, OnContent = "On", OffContent = "Off" };
+        var toggle = new ToggleSwitch
+        {
+            IsOn = tweak.IsSelected,
+            OnContent = "Include",
+            OffContent = "Skip",
+            MinWidth = 0,
+        };
         toggle.Toggled += (_, _) => tweak.IsSelected = toggle.IsOn;
 
-        var header = new Grid();
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        var title = new TextBlock { Text = tweak.Title, Style = (Style)Application.Current.Resources["SubtitleTextBlockStyle"], TextWrapping = TextWrapping.Wrap };
-        Grid.SetColumn(title, 0);
-        Grid.SetColumn(toggle, 1);
-        header.Children.Add(title);
-        header.Children.Add(toggle);
-
-        var stack = new StackPanel { Spacing = 8 };
-        stack.Children.Add(header);
-        stack.Children.Add(new TextBlock
-        {
-            Text = tweak.Risk == TweakRisk.Caution ? "Caution" : "Low risk",
-            Foreground = tweak.Risk == TweakRisk.Caution
-                ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Orange)
-                : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.DarkSeaGreen),
-        });
-        stack.Children.Add(new TextBlock { Text = tweak.Description, TextWrapping = TextWrapping.Wrap, Opacity = 0.8 });
+        var titleRow = new Grid { ColumnSpacing = 12 };
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var titles = new StackPanel { Spacing = 6 };
+        titles.Children.Add(Theme.Title(tweak.Title, 16));
+        var chips = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        chips.Children.Add(tweak.Risk == TweakRisk.Caution
+            ? Theme.Chip("Caution", Theme.Bg, Theme.Caution)
+            : Theme.Chip("Low risk", Theme.Sage, Theme.SurfaceRaised));
         if (!tweak.IsReversible)
         {
-            stack.Children.Add(new TextBlock { Text = "This cannot be undone.", Opacity = 0.8 });
+            chips.Children.Add(Theme.Chip("Cannot undo", Theme.Muted, Theme.SurfaceRaised));
         }
 
+        if (tweak.RequiresAdmin)
+        {
+            chips.Children.Add(Theme.Chip("Admin", Theme.Amber, Theme.SurfaceRaised));
+        }
+
+        titles.Children.Add(chips);
+        Grid.SetColumn(titles, 0);
+        Grid.SetColumn(toggle, 1);
+        titleRow.Children.Add(titles);
+        titleRow.Children.Add(toggle);
+
+        var stack = new StackPanel { Spacing = 10 };
+        stack.Children.Add(titleRow);
+        stack.Children.Add(Theme.Body(tweak.Description, muted: true));
         if (tweak.RequiresAdmin && tweak.AdminReason is not null)
         {
-            stack.Children.Add(new TextBlock { Text = "Needs Administrator: " + tweak.AdminReason, TextWrapping = TextWrapping.Wrap, Opacity = 0.8 });
+            stack.Children.Add(Theme.Body("Administrator: " + tweak.AdminReason, muted: true));
         }
 
         if (extra is not null)
@@ -67,38 +89,35 @@ public sealed partial class TweaksPage : Page
             stack.Children.Add(extra);
         }
 
-        return new Border
-        {
-            Padding = new Thickness(16),
-            CornerRadius = new CornerRadius(8),
-            Background = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CardBackgroundFillColorDefaultBrush"],
-            Child = stack,
-        };
+        return Theme.Card(stack, new Thickness(18, 16, 18, 16));
     }
 
-    private static Border StartupCard(StartupAppsTweak tweak, ScanResult scan)
+    private static UIElement StartupExtra(StartupAppsTweak tweak, ScanResult scan)
     {
-        var list = new StackPanel { Spacing = 4 };
+        var list = new StackPanel { Spacing = 2 };
         var disableable = scan.StartupApps.Where(a => a.CanDisable).ToList();
         if (disableable.Count == 0)
         {
-            list.Children.Add(new TextBlock { Text = "No per-user startup apps to disable.", Opacity = 0.7 });
+            list.Children.Add(Theme.Body("No per-user startup apps to disable.", muted: true));
+            return list;
         }
 
         foreach (var app in disableable)
         {
             var box = new CheckBox
             {
-                Content = $"{app.Name} ({(app.Enabled ? "enabled" : "already disabled")})",
+                Content = $"{app.Name}  ·  {(app.Enabled ? "currently on" : "already off")}",
                 IsChecked = tweak.Selected.Any(s => s.Name == app.Name),
                 Tag = app,
+                Foreground = Theme.Brush(Theme.Text),
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe UI"),
             };
             box.Checked += (_, _) => SyncStartup(tweak, list);
             box.Unchecked += (_, _) => SyncStartup(tweak, list);
             list.Children.Add(box);
         }
 
-        return Card(tweak, list);
+        return list;
     }
 
     private static void SyncStartup(StartupAppsTweak tweak, StackPanel list)
@@ -111,24 +130,30 @@ public sealed partial class TweaksPage : Page
         }
     }
 
-    private static Border TempCard(TempCleanTweak tweak)
+    private static UIElement TempExtra(TempCleanTweak tweak)
     {
         var extra = new StackPanel { Spacing = 8 };
         var shader = new CheckBox
         {
-            Content = "Also clear shader cache (first launches can stutter afterward)",
+            Content = "Also clear shader cache (first launches can stutter)",
             IsChecked = tweak.IncludeShaderCache,
+            Foreground = Theme.Brush(Theme.Text),
         };
         shader.Checked += (_, _) => tweak.IncludeShaderCache = true;
         shader.Unchecked += (_, _) => tweak.IncludeShaderCache = false;
         extra.Children.Add(shader);
-        extra.Children.Add(new TextBlock { Text = tweak.ShaderCacheWarning, TextWrapping = TextWrapping.Wrap, Opacity = 0.75 });
-        return Card(tweak, extra);
+        extra.Children.Add(Theme.Body(tweak.ShaderCacheWarning, muted: true));
+        return extra;
     }
 
-    private Border ExeCard(ITweak tweak, string pickerLabel)
+    private UIElement ExeExtra(ITweak tweak, string label)
     {
-        var pathBox = new TextBox { IsReadOnly = true, PlaceholderText = @"C:\Games\…\game.exe" };
+        var pathBox = new TextBox
+        {
+            IsReadOnly = true,
+            PlaceholderText = @"C:\Games\game.exe",
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Segoe UI"),
+        };
         if (tweak is DedicatedGpuTweak gpu && !string.IsNullOrEmpty(gpu.ExecutablePath))
         {
             pathBox.Text = gpu.ExecutablePath;
@@ -139,7 +164,7 @@ public sealed partial class TweaksPage : Page
             pathBox.Text = fso.ExecutablePath;
         }
 
-        var browse = new Button { Content = "Choose .exe", Margin = new Thickness(8, 0, 0, 0) };
+        var browse = new Button { Content = "Choose .exe", Style = (Style)Application.Current.Resources["GhostButton"] };
         browse.Click += async (_, _) =>
         {
             var picked = await PickExeAsync();
@@ -166,7 +191,7 @@ public sealed partial class TweaksPage : Page
             }
         };
 
-        var row = new Grid();
+        var row = new Grid { ColumnSpacing = 8 };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         Grid.SetColumn(pathBox, 0);
@@ -175,9 +200,10 @@ public sealed partial class TweaksPage : Page
         row.Children.Add(browse);
 
         var extra = new StackPanel { Spacing = 8 };
-        extra.Children.Add(new TextBlock { Text = pickerLabel, Opacity = 0.7 });
+        extra.Children.Add(Theme.Label(label.ToUpperInvariant()));
         extra.Children.Add(row);
-        return Card(tweak, extra);
+        extra.Children.Add(Theme.Body("Registry only. The game folder is not touched.", muted: true));
+        return extra;
     }
 
     private async Task<string?> PickExeAsync()
@@ -197,19 +223,21 @@ public sealed partial class TweaksPage : Page
         var catalog = App.Runtime.Catalog;
         if (catalog.StartupApps.IsSelected && catalog.StartupApps.Selected.Count == 0)
         {
-            FooterNote.Text = "Startup apps is on, but you have not chosen any.";
+            FooterNote.Text = "Startup is included, but no apps are checked.";
             return;
         }
 
+        SetBusy(true, "Building preview…");
         try
         {
-            var plan = App.Runtime.Engine.Preview(catalog.All);
+            var plan = await App.Runtime.Engine.PreviewAsync(catalog.All);
             if (plan.Tweaks.Count == 0)
             {
-                FooterNote.Text = "Nothing selected, or the selected tweaks have no changes to make.";
+                FooterNote.Text = "Nothing selected, or the selected rows have no changes.";
                 return;
             }
 
+            SetBusy(false, "");
             var dialog = new PreviewDialog(plan) { XamlRoot = XamlRoot };
             var result = await dialog.ShowAsync();
             if (result != ContentDialogResult.Primary)
@@ -217,16 +245,23 @@ public sealed partial class TweaksPage : Page
                 return;
             }
 
-            var outcome = App.Runtime.Engine.Apply(plan, createRestorePoint: plan.NeedsRestorePoint);
+            var applyNote = plan.NeedsRestorePoint
+                ? "Applying… Windows may ask for administrator. A restore point can take up to a minute."
+                : "Applying selected tweaks…";
+            SetBusy(true, applyNote);
+
+            var outcome = await App.Runtime.Engine.ApplyAsync(plan, createRestorePoint: plan.NeedsRestorePoint);
             if (!outcome.Applied)
             {
                 FooterNote.Text = string.Join(" ", outcome.Errors);
                 return;
             }
 
-            FooterNote.Text = outcome.Errors.Count == 0
+            var restore = outcome.Backup?.RestorePointMessage;
+            var applied = outcome.Errors.Count == 0
                 ? "Applied. History has the log and undo."
                 : "Applied with errors: " + string.Join(" ", outcome.Errors);
+            FooterNote.Text = string.IsNullOrWhiteSpace(restore) ? applied : applied + " " + restore;
 
             if (outcome.ShowTip && App.MainAppWindow is MainWindow window)
             {
@@ -236,6 +271,21 @@ public sealed partial class TweaksPage : Page
         catch (Exception ex)
         {
             FooterNote.Text = ex.Message;
+        }
+        finally
+        {
+            SetBusy(false, FooterNote.Text);
+        }
+    }
+
+    private void SetBusy(bool busy, string message)
+    {
+        PreviewButton.IsEnabled = !busy;
+        BusyRing.IsActive = busy;
+        BusyRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        if (!string.IsNullOrEmpty(message) || !busy)
+        {
+            FooterNote.Text = message;
         }
     }
 }

@@ -5,6 +5,8 @@ namespace Tweakwell;
 
 public sealed class WmiHardwareProbe : IHardwareProbe
 {
+    private static readonly TimeSpan QueryLimit = TimeSpan.FromSeconds(2);
+
     public string CpuName { get; }
     public int LogicalProcessors { get; }
     public long TotalMemoryBytes { get; }
@@ -16,9 +18,14 @@ public sealed class WmiHardwareProbe : IHardwareProbe
 
     public WmiHardwareProbe()
     {
-        CpuName = ReadFirst("Win32_Processor", "Name") ?? "Unknown CPU";
         LogicalProcessors = Environment.ProcessorCount;
+        CpuName = ReadFirst("Win32_Processor", "Name") ?? "Unknown CPU";
         TotalMemoryBytes = ReadLong("Win32_ComputerSystem", "TotalPhysicalMemory");
+        if (TotalMemoryBytes == 0)
+        {
+            TotalMemoryBytes = GC.GetGCMemoryInfo().TotalAvailableMemoryBytes;
+        }
+
         Gpus = ReadGpus();
         Disks = ReadDisks();
         Volumes = ReadVolumes();
@@ -72,12 +79,7 @@ public sealed class WmiHardwareProbe : IHardwareProbe
             return GpuKind.Integrated;
         }
 
-        if (n.Contains("amd") && n.Contains("radeon graphics") && !n.Contains("rx"))
-        {
-            return GpuKind.Integrated;
-        }
-
-        if (n.Contains("radeon(tm) graphics") || n.Contains("radeon graphics"))
+        if (n.Contains("radeon") && n.Contains("graphics") && !n.Contains("rx") && !n.Contains("xt") && !n.Contains("pro"))
         {
             return GpuKind.Integrated;
         }
@@ -87,28 +89,15 @@ public sealed class WmiHardwareProbe : IHardwareProbe
 
     private static IReadOnlyList<PhysicalDiskInfo> ReadDisks()
     {
+        // Storage WMI (MSFT_PhysicalDisk) hangs on some machines. Win32_DiskDrive is enough.
         var list = new List<PhysicalDiskInfo>();
-        foreach (var row in QueryNs(@"root\Microsoft\Windows\Storage", "MSFT_PhysicalDisk", "FriendlyName", "MediaType", "BusType"))
-        {
-            var name = row.GetValueOrDefault("FriendlyName") ?? "Disk";
-            var media = ParseMedia(row.GetValueOrDefault("MediaType"));
-            var bus = BusName(row.GetValueOrDefault("BusType"));
-            list.Add(new PhysicalDiskInfo(name, media, bus));
-        }
-
-        if (list.Count > 0)
-        {
-            return list;
-        }
-
         foreach (var row in Query("Win32_DiskDrive", "Model", "MediaType"))
         {
             var name = row.GetValueOrDefault("Model") ?? "Disk";
             var mediaText = row.GetValueOrDefault("MediaType") ?? "";
             var media = mediaText.Contains("SSD", StringComparison.OrdinalIgnoreCase) ? StorageMedia.Ssd
-                : mediaText.Contains("HDD", StringComparison.OrdinalIgnoreCase) || mediaText.Contains("Fixed", StringComparison.OrdinalIgnoreCase)
-                    ? StorageMedia.Unknown
-                    : StorageMedia.Unknown;
+                : mediaText.Contains("HDD", StringComparison.OrdinalIgnoreCase) ? StorageMedia.Hdd
+                : StorageMedia.Unknown;
             list.Add(new PhysicalDiskInfo(name, media, mediaText));
         }
 
@@ -130,27 +119,24 @@ public sealed class WmiHardwareProbe : IHardwareProbe
         };
     }
 
-    private static string BusName(string? raw) => raw switch
-    {
-        "17" => "NVMe",
-        "11" => "SATA",
-        "8" => "USB",
-        _ => string.IsNullOrEmpty(raw) ? "unknown bus" : $"bus {raw}",
-    };
-
     private static IReadOnlyList<VolumeInfo> ReadVolumes()
     {
         var list = new List<VolumeInfo>();
-        foreach (var row in Query("Win32_LogicalDisk", "DeviceID", "Size", "FreeSpace", "DriveType"))
+        try
         {
-            if (row.GetValueOrDefault("DriveType") != "3")
+            foreach (var drive in DriveInfo.GetDrives())
             {
-                continue;
-            }
+                if (drive.DriveType != DriveType.Fixed || !drive.IsReady)
+                {
+                    continue;
+                }
 
-            _ = long.TryParse(row.GetValueOrDefault("Size"), out var size);
-            _ = long.TryParse(row.GetValueOrDefault("FreeSpace"), out var free);
-            list.Add(new VolumeInfo(row.GetValueOrDefault("DeviceID") ?? "?", size, free));
+                list.Add(new VolumeInfo(drive.Name.TrimEnd('\\'), drive.TotalSize, drive.AvailableFreeSpace));
+            }
+        }
+        catch (Exception)
+        {
+            // DriveInfo can throw on locked volumes.
         }
 
         return list;
@@ -170,7 +156,7 @@ public sealed class WmiHardwareProbe : IHardwareProbe
             }
         }
 
-        return Query("Win32_Battery", "Name").Count > 0;
+        return false;
     }
 
     private static string? ReadFirst(string cls, string property)
@@ -194,34 +180,42 @@ public sealed class WmiHardwareProbe : IHardwareProbe
 
     private static List<Dictionary<string, string>> QueryNs(string ns, string cls, params string[] properties)
     {
-        var rows = new List<Dictionary<string, string>>();
         try
         {
-            var select = string.Join(", ", properties);
-            using var searcher = new ManagementObjectSearcher(ns, $"SELECT {select} FROM {cls}");
-            foreach (var obj in searcher.Get())
-            {
-                using (obj)
-                {
-                    var row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                    foreach (var property in properties)
-                    {
-                        var value = obj[property];
-                        row[property] = value switch
-                        {
-                            null => "",
-                            Array arr => string.Join(",", arr.Cast<object>()),
-                            _ => Convert.ToString(value) ?? "",
-                        };
-                    }
-
-                    rows.Add(row);
-                }
-            }
+            var task = Task.Run(() => QueryNsCore(ns, cls, properties));
+            return task.Wait(QueryLimit) ? task.Result : [];
         }
         catch (Exception)
         {
-            // WMI is optional; callers tolerate empty lists.
+            return [];
+        }
+    }
+
+    private static List<Dictionary<string, string>> QueryNsCore(string ns, string cls, params string[] properties)
+    {
+        var rows = new List<Dictionary<string, string>>();
+        var select = string.Join(", ", properties);
+        using var searcher = new ManagementObjectSearcher(ns, $"SELECT {select} FROM {cls}");
+        searcher.Options.Timeout = QueryLimit;
+        searcher.Options.ReturnImmediately = true;
+        foreach (var obj in searcher.Get())
+        {
+            using (obj)
+            {
+                var row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var property in properties)
+                {
+                    var value = obj[property];
+                    row[property] = value switch
+                    {
+                        null => "",
+                        Array arr => string.Join(",", arr.Cast<object>()),
+                        _ => Convert.ToString(value) ?? "",
+                    };
+                }
+
+                rows.Add(row);
+            }
         }
 
         return rows;

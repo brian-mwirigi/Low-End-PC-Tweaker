@@ -14,6 +14,22 @@ public partial class App : Application
     {
         InitializeComponent();
         RequestedTheme = ApplicationTheme.Dark;
+        UnhandledException += (_, e) =>
+        {
+            try
+            {
+                AppPaths.EnsureCreated();
+                File.AppendAllText(
+                    Path.Combine(AppPaths.Root, "crash.log"),
+                    $"{DateTimeOffset.Now:O} {e.Message}{Environment.NewLine}{e.Exception}{Environment.NewLine}");
+            }
+            catch (Exception)
+            {
+                // last resort
+            }
+
+            e.Handled = true;
+        };
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)

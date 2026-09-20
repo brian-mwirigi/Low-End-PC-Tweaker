@@ -23,6 +23,29 @@ internal sealed class FakeFileSystem : IFileSystem
                                  || Path.GetDirectoryName(f)?.Equals(path, StringComparison.OrdinalIgnoreCase) == true)
             .ToList();
 
+    public FileWalk Summarize(string path, int maxFiles, int timeoutMs)
+    {
+        var files = EnumerateFiles(path, recursive: true);
+        var take = files.Take(maxFiles).ToList();
+        return new FileWalk(take.Count, take.Sum(GetFileLength), take.Count < files.Count);
+    }
+
+    public FileWalk DeleteUnder(string path)
+    {
+        var deleted = 0;
+        long bytes = 0;
+        foreach (var file in EnumerateFiles(path, recursive: true).ToList())
+        {
+            if (TryDeleteFile(file, out var size))
+            {
+                deleted++;
+                bytes += size;
+            }
+        }
+
+        return new FileWalk(deleted, bytes, false);
+    }
+
     public long GetFileLength(string path) => Files.TryGetValue(path, out var bytes) ? bytes.Length : 0;
 
     public bool TryDeleteFile(string path, out long bytesDeleted)

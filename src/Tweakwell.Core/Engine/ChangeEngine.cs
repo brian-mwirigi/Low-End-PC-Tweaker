@@ -41,6 +41,12 @@ public sealed class ChangeEngine
         return new ApplyPlan(tweaks, admin.Distinct(StringComparer.Ordinal).ToList(), needsRestore);
     }
 
+    public Task<ApplyPlan> PreviewAsync(IEnumerable<ITweak> selected)
+    {
+        var snapshot = selected.ToList();
+        return Task.Run(() => Preview(snapshot));
+    }
+
     public ApplyOutcome Apply(ApplyPlan plan, bool createRestorePoint)
     {
         if (plan.Tweaks.Count == 0)
@@ -113,6 +119,9 @@ public sealed class ChangeEngine
         return new ApplyOutcome(true, backup, errors, showTip);
     }
 
+    public Task<ApplyOutcome> ApplyAsync(ApplyPlan plan, bool createRestorePoint)
+        => Task.Run(() => Apply(plan, createRestorePoint));
+
     public IReadOnlyList<string> UndoTweak(string tweakId, IEnumerable<ITweak> catalog)
     {
         var tweak = catalog.FirstOrDefault(t => t.Id == tweakId);
@@ -162,6 +171,12 @@ public sealed class ChangeEngine
         return errors;
     }
 
+    public Task<IReadOnlyList<string>> UndoTweakAsync(string tweakId, IEnumerable<ITweak> catalog)
+    {
+        var snapshot = catalog.ToList();
+        return Task.Run(() => UndoTweak(tweakId, snapshot));
+    }
+
     public IReadOnlyList<string> RestoreAll(IEnumerable<ITweak> catalog)
     {
         var map = catalog.ToDictionary(t => t.Id, StringComparer.OrdinalIgnoreCase);
@@ -201,5 +216,11 @@ public sealed class ChangeEngine
         }
 
         return errors;
+    }
+
+    public Task<IReadOnlyList<string>> RestoreAllAsync(IEnumerable<ITweak> catalog)
+    {
+        var snapshot = catalog.ToList();
+        return Task.Run(() => RestoreAll(snapshot));
     }
 }

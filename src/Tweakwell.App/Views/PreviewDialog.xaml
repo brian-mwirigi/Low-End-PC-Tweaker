@@ -5,8 +5,9 @@
     Title="Preview — nothing has been applied"
     PrimaryButtonText="Apply these changes"
     CloseButtonText="Cancel"
-    DefaultButton="Close">
+    DefaultButton="Close"
+    CornerRadius="10">
     <ScrollViewer MaxHeight="480">
-        <StackPanel x:Name="Body" Spacing="12" />
+        <StackPanel x:Name="Body" Spacing="14" />
     </ScrollViewer>
 </ContentDialog>

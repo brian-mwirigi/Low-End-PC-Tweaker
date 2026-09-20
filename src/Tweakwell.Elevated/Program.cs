@@ -44,13 +44,47 @@ internal static class Program
 
     private static int CreateRestorePoint(string description, string? resultPath)
     {
-        using var cls = new ManagementClass(@"root\default", "SystemRestore", new ObjectGetOptions());
-        using var inParams = cls.GetMethodParameters("CreateRestorePoint");
-        inParams["Description"] = description;
-        inParams["RestorePointType"] = 12; // MODIFY_SETTINGS
-        inParams["EventType"] = 100; // BEGIN_SYSTEM_CHANGE
-        using var output = cls.InvokeMethod("CreateRestorePoint", inParams, null);
-        var code = Convert.ToInt32(output?["ReturnValue"] ?? -1);
+        var code = -1;
+        string? error = null;
+        using var done = new ManualResetEventSlim(false);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                using var cls = new ManagementClass(@"root\default", "SystemRestore", new ObjectGetOptions());
+                using var inParams = cls.GetMethodParameters("CreateRestorePoint");
+                inParams["Description"] = description;
+                inParams["RestorePointType"] = 12; // MODIFY_SETTINGS
+                inParams["EventType"] = 100; // BEGIN_SYSTEM_CHANGE
+                using var output = cls.InvokeMethod("CreateRestorePoint", inParams, null);
+                code = Convert.ToInt32(output?["ReturnValue"] ?? -1);
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+            }
+            finally
+            {
+                done.Set();
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "Tweakwell-RestorePoint",
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        if (!done.Wait(TimeSpan.FromSeconds(75)))
+        {
+            return Write(false, null, "Restore point timed out after 75s. Tweaks will still apply.", resultPath);
+        }
+
+        if (error is not null)
+        {
+            return Write(false, null, error, resultPath);
+        }
+
         return code == 0
             ? Write(true, "Restore point created.", null, resultPath)
             : Write(false, null, $"System Restore returned {code}. System Protection may be off.", resultPath);
@@ -79,10 +113,26 @@ internal static class Program
             return Write(false, null, "Could not start powercfg.", resultPath);
         }
 
-        process.WaitForExit(15_000);
+        var stdout = process.StandardOutput.ReadToEndAsync();
+        var stderr = process.StandardError.ReadToEndAsync();
+        if (!process.WaitForExit(8_000))
+        {
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            catch (Exception)
+            {
+                // Best effort.
+            }
+
+            return Write(false, null, "powercfg timed out.", resultPath);
+        }
+
+        Task.WaitAll([stdout, stderr], 1_000);
         if (process.ExitCode != 0)
         {
-            var err = process.StandardError.ReadToEnd() + process.StandardOutput.ReadToEnd();
+            var err = (stderr.IsCompletedSuccessfully ? stderr.Result : "") + (stdout.IsCompletedSuccessfully ? stdout.Result : "");
             return Write(false, null, string.IsNullOrWhiteSpace(err) ? $"powercfg exited {process.ExitCode}." : err.Trim(), resultPath);
         }
 

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Tweakwell;
 
 public sealed class TempCleanTweak : ITweak
@@ -30,12 +32,20 @@ public sealed class TempCleanTweak : ITweak
 
     public IReadOnlyList<PlannedChange> Preview()
     {
-        var changes = new List<PlannedChange> { Describe(_files.Expand("%TEMP%"), "User temp") };
+        var clock = Stopwatch.StartNew();
+        const int budgetMs = 1_500;
+        var changes = new List<PlannedChange>
+        {
+            Describe(_files.Expand("%TEMP%"), "User temp", Remaining(clock, budgetMs)),
+        };
         if (IncludeShaderCache)
         {
             foreach (var root in ShaderCacheRoots)
             {
-                changes.Add(Describe(_files.Expand(root), "Shader cache (cannot undo; first launches may stutter)"));
+                changes.Add(Describe(
+                    _files.Expand(root),
+                    "Shader cache (cannot undo; first launches may stutter)",
+                    Remaining(clock, budgetMs)));
             }
         }
 
@@ -44,12 +54,12 @@ public sealed class TempCleanTweak : ITweak
 
     public void Apply()
     {
-        DeleteTree(_files.Expand("%TEMP%"));
+        _files.DeleteUnder(_files.Expand("%TEMP%"));
         if (IncludeShaderCache)
         {
             foreach (var root in ShaderCacheRoots)
             {
-                DeleteTree(_files.Expand(root));
+                _files.DeleteUnder(_files.Expand(root));
             }
         }
     }
@@ -57,40 +67,30 @@ public sealed class TempCleanTweak : ITweak
     public void Undo(IReadOnlyList<PlannedChange> previous)
         => throw new InvalidOperationException("Deleted temp files cannot be restored.");
 
-    private PlannedChange Describe(string path, string label)
+    private PlannedChange Describe(string path, string label, int timeoutMs)
     {
         if (!_files.DirectoryExists(path))
         {
             return new PlannedChange("Folder", path, null, label + ": missing", "leave missing");
         }
 
-        var files = _files.EnumerateFiles(path, recursive: true);
-        long bytes = 0;
-        foreach (var file in files)
+        var walk = _files.Summarize(path, maxFiles: 8_000, timeoutMs: timeoutMs);
+        var size = $"{label}: {(walk.Capped ? "at least " : "")}{walk.Files} files, {FormatBytes(walk.Bytes)}";
+        if (walk.Capped)
         {
-            bytes += _files.GetFileLength(file);
+            size += " (preview stopped counting so the window stays awake)";
         }
 
         return new PlannedChange(
             "Folder",
             path,
             null,
-            $"{label}: {files.Count} files, {FormatBytes(bytes)}",
+            size,
             "delete unlocked files (cannot undo)");
     }
 
-    private void DeleteTree(string path)
-    {
-        if (!_files.DirectoryExists(path))
-        {
-            return;
-        }
-
-        foreach (var file in _files.EnumerateFiles(path, recursive: true))
-        {
-            _files.TryDeleteFile(file, out _);
-        }
-    }
+    private static int Remaining(Stopwatch clock, int budgetMs)
+        => Math.Max(200, budgetMs - (int)clock.ElapsedMilliseconds);
 
     internal static string FormatBytes(long bytes)
     {

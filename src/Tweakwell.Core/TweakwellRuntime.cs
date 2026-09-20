@@ -2,41 +2,51 @@ namespace Tweakwell;
 
 public sealed class TweakwellRuntime
 {
+    private readonly IProcessRunner _runner;
+    private readonly IRegistry _registry;
+    private readonly IFileSystem _files;
+
     public LocalStore Store { get; }
     public ChangeEngine Engine { get; }
     public TweakCatalog Catalog { get; }
-    public SystemScanner Scanner { get; }
     public ScanResult? LastScan { get; set; }
 
     public TweakwellRuntime(
         LocalStore store,
         ChangeEngine engine,
         TweakCatalog catalog,
-        SystemScanner scanner)
+        IProcessRunner runner,
+        IRegistry registry,
+        IFileSystem files)
     {
         Store = store;
         Engine = engine;
         Catalog = catalog;
-        Scanner = scanner;
+        _runner = runner;
+        _registry = registry;
+        _files = files;
     }
 
     public static TweakwellRuntime CreateDefault()
     {
         var store = new LocalStore();
         var elevated = new ElevatedHelperClient();
-        var hardware = new WmiHardwareProbe();
         var registry = new WindowsRegistry();
         var files = new WindowsFileSystem();
         var runner = new ProcessRunner();
-        var catalog = new TweakCatalog(registry, runner, files, new ClientAreaAnimation(), elevated, hardware.IsLaptop);
+        var catalog = new TweakCatalog(registry, runner, files, new ClientAreaAnimation(), elevated, isLaptop: false);
         var engine = new ChangeEngine(store, elevated);
-        var scanner = new SystemScanner(hardware, runner, registry, files);
-        return new TweakwellRuntime(store, engine, catalog, scanner);
+        return new TweakwellRuntime(store, engine, catalog, runner, registry, files);
     }
 
     public ScanResult Scan()
     {
-        LastScan = Scanner.Scan();
+        var hardware = new WmiHardwareProbe();
+        var scanner = new SystemScanner(hardware, _runner, _registry, _files);
+        LastScan = scanner.Scan();
+        Catalog.PowerPlan.IsLaptop = LastScan.IsLaptop;
         return LastScan;
     }
+
+    public Task<ScanResult> ScanAsync() => Task.Run(Scan);
 }

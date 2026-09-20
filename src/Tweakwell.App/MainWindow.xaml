@@ -13,26 +13,34 @@
             Background="{StaticResource TwBgBrush}"
             BorderBrush="{StaticResource TwLineBrush}"
             BorderThickness="0,0,0,1"
-            Padding="20,14,20,12">
+            Padding="28,16,28,0">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="220" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="220" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel VerticalAlignment="Center" Spacing="2">
-                    <TextBlock
-                        Text="Tweakwell"
-                        FontSize="18"
-                        FontWeight="SemiBold"
-                        FontFamily="Segoe UI"
-                        Foreground="{StaticResource TwTextBrush}" />
-                    <TextBlock
-                        Text="shown · logged · reversible"
-                        FontSize="12"
-                        FontFamily="Segoe UI"
-                        Foreground="{StaticResource TwMutedBrush}" />
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="0,0,0,14">
+                    <Border
+                        Width="8"
+                        Height="8"
+                        Background="{StaticResource TwAmberBrush}"
+                        VerticalAlignment="Center" />
+                    <StackPanel Spacing="1">
+                        <TextBlock
+                            Text="TWEAKWELL"
+                            FontSize="13"
+                            FontWeight="SemiBold"
+                            CharacterSpacing="140"
+                            FontFamily="Segoe UI"
+                            Foreground="{StaticResource TwTextBrush}" />
+                        <TextBlock
+                            Text="low-end windows"
+                            FontSize="11"
+                            FontFamily="Segoe UI"
+                            Foreground="{StaticResource TwMutedBrush}" />
+                    </StackPanel>
                 </StackPanel>
 
                 <StackPanel
@@ -40,8 +48,8 @@
                     Grid.Column="1"
                     Orientation="Horizontal"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Spacing="6">
+                    VerticalAlignment="Bottom"
+                    Spacing="4">
                     <Button x:Name="NavScan" Content="Scan" Tag="scan" Style="{StaticResource NavPillActive}" Click="Nav_Click" />
                     <Button x:Name="NavTweaks" Content="Tweaks" Tag="tweaks" Style="{StaticResource NavPill}" Click="Nav_Click" />
                     <Button x:Name="NavHistory" Content="History" Tag="history" Style="{StaticResource NavPill}" Click="Nav_Click" />
@@ -51,11 +59,13 @@
                 <TextBlock
                     x:Name="ShellNote"
                     Grid.Column="2"
+                    HorizontalAlignment="Right"
                     VerticalAlignment="Center"
-                    FontSize="12"
-                    FontFamily="Segoe UI"
+                    Margin="0,0,0,14"
+                    FontSize="11"
+                    FontFamily="Consolas"
                     Foreground="{StaticResource TwMutedBrush}"
-                    Text="Scan changes nothing" />
+                    Text="read only" />
             </Grid>
         </Border>
 

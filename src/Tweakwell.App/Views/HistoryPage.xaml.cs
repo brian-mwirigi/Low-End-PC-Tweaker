@@ -39,10 +39,11 @@ public sealed partial class HistoryPage : Page
 
         foreach (var entry in entries)
         {
-            var row = new StackPanel { Spacing = 2, Margin = new Thickness(0, 8, 0, 8) };
-            row.Children.Add(Theme.Label($"{entry.At.ToLocalTime():yyyy-MM-dd HH:mm}  ·  {entry.Action}  ·  {entry.TweakId}"));
-            row.Children.Add(Theme.Body(entry.Summary));
-            LogHost.Children.Add(row);
+            LogHost.Children.Add(Theme.Ledger(
+                entry.At.ToLocalTime().ToString("yyyy-MM-dd  HH:mm"),
+                entry.Action,
+                entry.TweakId,
+                entry.Summary));
         }
     }
 

@@ -2,12 +2,13 @@
     x:Class="Tweakwell.App.Views.PreviewDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Preview — nothing has been applied"
+    Title="Proof"
     PrimaryButtonText="Apply these changes"
     CloseButtonText="Cancel"
     DefaultButton="Close"
-    CornerRadius="10">
-    <ScrollViewer MaxHeight="480">
-        <StackPanel x:Name="Body" Spacing="14" />
+    CornerRadius="2"
+    RequestedTheme="Dark">
+    <ScrollViewer MaxHeight="500">
+        <StackPanel x:Name="Body" Spacing="16" Width="520" />
     </ScrollViewer>
 </ContentDialog>

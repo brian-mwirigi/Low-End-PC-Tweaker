@@ -11,26 +11,27 @@
 
         <ScrollViewer Grid.Row="0" HorizontalScrollBarVisibility="Disabled">
             <Grid>
-            <StackPanel Padding="28,20,28,16" Spacing="14" MaxWidth="980" HorizontalAlignment="Center">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Choose, then preview" Style="{StaticResource PageTitle}" />
-                    <TextBlock
-                        Style="{StaticResource PageLead}"
-                        Text="Each row says what it does and what it costs you. Apply is on the next screen, with old and new values." />
+                <StackPanel Padding="28,28,28,20" Spacing="20" MaxWidth="1040" HorizontalAlignment="Center">
+                    <StackPanel Spacing="8">
+                        <TextBlock Style="{StaticResource PageEyebrow}" Text="CATALOG" />
+                        <TextBlock Text="Pick, then preview" Style="{StaticResource PageTitle}" />
+                        <TextBlock
+                            Style="{StaticResource PageLead}"
+                            Text="Each row says what it costs. Apply is the next screen, with old and new values." />
+                    </StackPanel>
+                    <StackPanel x:Name="TweakHost" Spacing="8" />
                 </StackPanel>
-                <StackPanel x:Name="TweakHost" Spacing="10" />
-            </StackPanel>
             </Grid>
         </ScrollViewer>
 
         <Border
             Grid.Row="1"
-            Background="{StaticResource TwSurfaceBrush}"
+            Background="#0A0A0A"
             BorderBrush="{StaticResource TwLineBrush}"
             BorderThickness="0,1,0,0"
-            Padding="28,14">
-            <Grid MaxWidth="980" HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="12">
+            Padding="28,16">
+            <Grid MaxWidth="1040" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="14">
                     <Button
                         x:Name="PreviewButton"
                         Content="Preview selected"
@@ -48,6 +49,14 @@
                         VerticalAlignment="Center"
                         Style="{StaticResource PageLead}" />
                 </StackPanel>
+                <TextBlock
+                    x:Name="SelectedCount"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    FontFamily="Consolas"
+                    FontSize="12"
+                    Foreground="{StaticResource TwMutedBrush}"
+                    Text="0 included" />
             </Grid>
         </Border>
     </Grid>

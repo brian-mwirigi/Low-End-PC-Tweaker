@@ -5,31 +5,41 @@
     Background="{StaticResource TwBgBrush}">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
         <Grid>
-        <StackPanel Padding="28,20,28,32" Spacing="18" MaxWidth="720" HorizontalAlignment="Center">
-            <TextBlock Text="About" Style="{StaticResource PageTitle}" />
-            <TextBlock
-                FontSize="16"
-                FontFamily="Segoe UI"
-                Foreground="{StaticResource TwTextBrush}"
-                TextWrapping="Wrap"
-                Text="Every change is shown before it is applied, logged, and reversible. It will not turn a 2010 laptop into a gaming rig." />
-            <TextBlock
-                Style="{StaticResource PageLead}"
-                Text="Open source. No telemetry, accounts, ads, or bundled software. Admin is requested only for a restore point or a power-plan switch." />
+            <StackPanel Padding="28,48,28,48" Spacing="22" MaxWidth="640" HorizontalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Border Width="10" Height="10" Background="{StaticResource TwAmberBrush}" VerticalAlignment="Center" />
+                    <TextBlock
+                        Text="TWEAKWELL"
+                        FontSize="13"
+                        FontWeight="SemiBold"
+                        CharacterSpacing="160"
+                        FontFamily="Segoe UI"
+                        Foreground="{StaticResource TwTextBrush}" />
+                </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Spacing="10">
-                <HyperlinkButton x:Name="CoffeeLink" Content="Buy Me a Coffee" Foreground="{StaticResource TwAmberBrush}" />
-                <HyperlinkButton x:Name="MpesaLink" Content="M-Pesa" Foreground="{StaticResource TwAmberBrush}" />
+                <TextBlock
+                    Text="You see the change. Then you apply it."
+                    Style="{StaticResource PageTitle}"
+                    FontSize="32" />
+                <TextBlock
+                    Style="{StaticResource PageLead}"
+                    Text="Old values sit in LocalAppData. A 2010 laptop stays a 2010 laptop. No FPS number, no registry cleaner, no anti-cheat, no telemetry." />
+
+                <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
+                    <HyperlinkButton x:Name="CoffeeLink" Content="Buy Me a Coffee" Foreground="{StaticResource TwAmberBrush}" />
+                    <HyperlinkButton x:Name="MpesaLink" Content="M-Pesa" Foreground="{StaticResource TwAmberBrush}" />
+                </StackPanel>
+                <TextBlock x:Name="MpesaNote" Style="{StaticResource PageLead}" />
+
+                <Border Height="1" Background="{StaticResource TwLineBrush}" Margin="0,8" />
+
+                <TextBlock Text="SMARTSCREEN" Style="{StaticResource PageEyebrow}" />
+                <TextBlock
+                    Style="{StaticResource PageLead}"
+                    Text="The release exe is unsigned. Windows may warn on first run. Check the SHA-256 on the GitHub Release." />
+
+                <HyperlinkButton x:Name="RepoLink" Content="github.com/brian-mwirigi/tweakwell" Foreground="{StaticResource TwAmberBrush}" />
             </StackPanel>
-            <TextBlock x:Name="MpesaNote" Style="{StaticResource PageLead}" />
-
-            <TextBlock Text="SmartScreen" Style="{StaticResource PageTitle}" FontSize="18" />
-            <TextBlock
-                Style="{StaticResource PageLead}"
-                Text="The release exe is unsigned. Windows may warn on first run. That is reputation, not a detection. Check the SHA-256 on the GitHub Release." />
-
-            <HyperlinkButton x:Name="RepoLink" Content="github.com/brian-mwirigi/tweakwell" Foreground="{StaticResource TwAmberBrush}" />
-        </StackPanel>
         </Grid>
     </ScrollViewer>
 </Page>

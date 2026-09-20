@@ -30,17 +30,18 @@ public sealed partial class TweaksPage : Page
             [],
             []);
 
-        TweakHost.Children.Add(Row(catalog.PowerPlan));
-        TweakHost.Children.Add(Row(catalog.GameMode));
-        TweakHost.Children.Add(Row(catalog.GameBar));
-        TweakHost.Children.Add(Row(catalog.VisualEffects));
-        TweakHost.Children.Add(Row(catalog.StartupApps, StartupExtra(catalog.StartupApps, scan)));
-        TweakHost.Children.Add(Row(catalog.TempClean, TempExtra(catalog.TempClean)));
-        TweakHost.Children.Add(Row(catalog.DedicatedGpu, ExeExtra(catalog.DedicatedGpu, "Game .exe")));
-        TweakHost.Children.Add(Row(catalog.FullscreenOptimizations, ExeExtra(catalog.FullscreenOptimizations, "Game .exe")));
+        TweakHost.Children.Add(Row(1, catalog.PowerPlan));
+        TweakHost.Children.Add(Row(2, catalog.GameMode));
+        TweakHost.Children.Add(Row(3, catalog.GameBar));
+        TweakHost.Children.Add(Row(4, catalog.VisualEffects));
+        TweakHost.Children.Add(Row(5, catalog.StartupApps, StartupExtra(catalog.StartupApps, scan)));
+        TweakHost.Children.Add(Row(6, catalog.TempClean, TempExtra(catalog.TempClean)));
+        TweakHost.Children.Add(Row(7, catalog.DedicatedGpu, ExeExtra(catalog.DedicatedGpu, "Game .exe")));
+        TweakHost.Children.Add(Row(8, catalog.FullscreenOptimizations, ExeExtra(catalog.FullscreenOptimizations, "Game .exe")));
+        CountSelected();
     }
 
-    private Border Row(ITweak tweak, UIElement? extra = null)
+    private Border Row(int index, ITweak tweak, UIElement? extra = null)
     {
         var toggle = new ToggleSwitch
         {
@@ -49,17 +50,20 @@ public sealed partial class TweaksPage : Page
             OffContent = "Skip",
             MinWidth = 0,
         };
-        toggle.Toggled += (_, _) => tweak.IsSelected = toggle.IsOn;
 
-        var titleRow = new Grid { ColumnSpacing = 12 };
+        var titleRow = new Grid { ColumnSpacing = 14 };
+        titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(36) });
         titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         titleRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var indexBlock = Theme.MonoText(index.ToString("00"), 13, muted: true);
+        indexBlock.VerticalAlignment = VerticalAlignment.Top;
+        indexBlock.Margin = new Thickness(0, 4, 0, 0);
         var titles = new StackPanel { Spacing = 6 };
         titles.Children.Add(Theme.Title(tweak.Title, 16));
         var chips = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         chips.Children.Add(tweak.Risk == TweakRisk.Caution
             ? Theme.Chip("Caution", Theme.Bg, Theme.Caution)
-            : Theme.Chip("Low risk", Theme.Sage, Theme.SurfaceRaised));
+            : Theme.Chip("Low risk", Theme.Bg, Theme.Sage));
         if (!tweak.IsReversible)
         {
             chips.Children.Add(Theme.Chip("Cannot undo", Theme.Muted, Theme.SurfaceRaised));
@@ -71,8 +75,10 @@ public sealed partial class TweaksPage : Page
         }
 
         titles.Children.Add(chips);
-        Grid.SetColumn(titles, 0);
-        Grid.SetColumn(toggle, 1);
+        Grid.SetColumn(indexBlock, 0);
+        Grid.SetColumn(titles, 1);
+        Grid.SetColumn(toggle, 2);
+        titleRow.Children.Add(indexBlock);
         titleRow.Children.Add(titles);
         titleRow.Children.Add(toggle);
 
@@ -89,7 +95,29 @@ public sealed partial class TweaksPage : Page
             stack.Children.Add(extra);
         }
 
-        return Theme.Card(stack, new Thickness(18, 16, 18, 16));
+        var card = Theme.Card(stack, new Thickness(16, 16, 18, 16));
+        void Paint()
+        {
+            tweak.IsSelected = toggle.IsOn;
+            card.BorderThickness = tweak.IsSelected ? new Thickness(2, 1, 1, 1) : new Thickness(1);
+            card.BorderBrush = Theme.Brush(tweak.IsSelected ? Theme.Amber : Theme.Line);
+            CountSelected();
+        }
+
+        toggle.Toggled += (_, _) => Paint();
+        Paint();
+        return card;
+    }
+
+    private void CountSelected()
+    {
+        if (SelectedCount is null)
+        {
+            return;
+        }
+
+        var n = App.Runtime.Catalog.All.Count(t => t.IsSelected);
+        SelectedCount.Text = n == 0 ? "0 included" : $"{n} included";
     }
 
     private static UIElement StartupExtra(StartupAppsTweak tweak, ScanResult scan)

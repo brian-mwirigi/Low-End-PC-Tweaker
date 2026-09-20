@@ -5,60 +5,82 @@
     Background="{StaticResource TwBgBrush}">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
         <Grid>
-        <StackPanel Padding="28,20,28,32" Spacing="22" MaxWidth="980" HorizontalAlignment="Center">
-            <Grid>
-                <StackPanel Spacing="4">
-                    <TextBlock Text="This machine" Style="{StaticResource PageTitle}" />
-                    <TextBlock
-                        x:Name="LeadText"
-                        Style="{StaticResource PageLead}"
-                        Text="Read-only. Tweakwell has not changed the registry, the power plan, or any files." />
-                </StackPanel>
-                <Button
-                    x:Name="RefreshButton"
-                    Content="Scan again"
-                    Style="{StaticResource GhostButton}"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Click="Refresh_Click" />
-            </Grid>
-
-            <StackPanel x:Name="FindingsHost" Spacing="10" />
-
-            <Grid x:Name="SpecGrid" ColumnSpacing="10" RowSpacing="10">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-            </Grid>
-
-            <StackPanel Spacing="8">
+            <StackPanel Padding="28,28,28,40" Spacing="28" MaxWidth="1040" HorizontalAlignment="Center">
                 <Grid>
-                    <TextBlock Text="Startup" Style="{StaticResource PageTitle}" FontSize="18" />
-                    <TextBlock
-                        x:Name="StartupCount"
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="EyebrowText" Style="{StaticResource PageEyebrow}" Text="READ ONLY" />
+                        <TextBlock x:Name="MachineTitle" Text="This machine" Style="{StaticResource PageTitle}" />
+                        <TextBlock
+                            x:Name="LeadText"
+                            Style="{StaticResource PageLead}"
+                            Text="Registry, power plan, and disk are untouched." />
+                    </StackPanel>
+                    <Button
+                        x:Name="RefreshButton"
+                        Content="Scan again"
+                        Style="{StaticResource GhostButton}"
                         HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Style="{StaticResource PageLead}" />
+                        VerticalAlignment="Top"
+                        Click="Refresh_Click" />
                 </Grid>
-                <TextBlock
-                    Style="{StaticResource PageLead}"
-                    Text="All-users entries are listed so you can see them. Only this-user items can be disabled from Tweaks." />
-                <Border
-                    Background="{StaticResource TwSurfaceBrush}"
-                    BorderBrush="{StaticResource TwLineBrush}"
-                    BorderThickness="1"
-                    CornerRadius="10"
-                    Padding="12,4">
-                    <StackPanel x:Name="StartupHost" />
+
+                <Border BorderBrush="{StaticResource TwLineBrush}" BorderThickness="0,1,0,1" Padding="0,22">
+                    <Grid ColumnSpacing="28">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel x:Name="StatRam" Grid.Column="0" />
+                        <StackPanel x:Name="StatProc" Grid.Column="1" />
+                        <StackPanel x:Name="StatDisk" Grid.Column="2" />
+                    </Grid>
                 </Border>
+
+                <StackPanel Spacing="10">
+                    <TextBlock Text="FINDINGS" Style="{StaticResource PageEyebrow}" />
+                    <StackPanel x:Name="FindingsHost" Spacing="8" />
+                </StackPanel>
+
+                <StackPanel Spacing="10">
+                    <TextBlock Text="HARDWARE" Style="{StaticResource PageEyebrow}" />
+                    <Grid x:Name="SpecGrid" ColumnSpacing="8" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Spacing="10">
+                    <Grid>
+                        <TextBlock Text="STARTUP" Style="{StaticResource PageEyebrow}" VerticalAlignment="Center" />
+                        <TextBlock
+                            x:Name="StartupCount"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            Foreground="{StaticResource TwMutedBrush}" />
+                    </Grid>
+                    <TextBlock
+                        Style="{StaticResource PageLead}"
+                        Text="All-users entries are listed so you can see them. Only this-user items can be disabled from Tweaks." />
+                    <Border
+                        Background="{StaticResource TwSurfaceBrush}"
+                        BorderBrush="{StaticResource TwLineBrush}"
+                        BorderThickness="1"
+                        CornerRadius="2"
+                        Padding="16,2">
+                        <StackPanel x:Name="StartupHost" />
+                    </Border>
+                </StackPanel>
             </StackPanel>
-        </StackPanel>
         </Grid>
     </ScrollViewer>
 </Page>

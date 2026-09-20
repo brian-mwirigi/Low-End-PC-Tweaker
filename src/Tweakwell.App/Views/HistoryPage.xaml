@@ -5,31 +5,32 @@
     Background="{StaticResource TwBgBrush}">
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
         <Grid>
-        <StackPanel Padding="28,20,28,32" Spacing="18" MaxWidth="980" HorizontalAlignment="Center">
-            <StackPanel Spacing="4">
-                <TextBlock Text="What changed" Style="{StaticResource PageTitle}" />
-                <TextBlock
-                    Style="{StaticResource PageLead}"
-                    Text="Undo puts the previous registry or power-plan values back. Deleted temp files stay gone." />
+            <StackPanel Padding="28,28,28,40" Spacing="22" MaxWidth="1040" HorizontalAlignment="Center">
+                <StackPanel Spacing="8">
+                    <TextBlock Style="{StaticResource PageEyebrow}" Text="LEDGER" />
+                    <TextBlock Text="What changed" Style="{StaticResource PageTitle}" />
+                    <TextBlock
+                        Style="{StaticResource PageLead}"
+                        Text="Undo puts the previous registry or power-plan values back. Deleted temp files stay gone." />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button x:Name="RestoreAllButton" Content="Restore everything" Style="{StaticResource GhostButton}" Click="RestoreAll_Click" />
+                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" Style="{StaticResource PageLead}" />
+                </StackPanel>
+
+                <StackPanel x:Name="UndoHost" Spacing="6" />
+
+                <TextBlock Text="LOG" Style="{StaticResource PageEyebrow}" />
+                <Border
+                    Background="{StaticResource TwSurfaceBrush}"
+                    BorderBrush="{StaticResource TwLineBrush}"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    Padding="18,10">
+                    <StackPanel x:Name="LogHost" />
+                </Border>
             </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Spacing="12">
-                <Button x:Name="RestoreAllButton" Content="Restore everything" Style="{StaticResource GhostButton}" Click="RestoreAll_Click" />
-                <TextBlock x:Name="StatusText" VerticalAlignment="Center" Style="{StaticResource PageLead}" />
-            </StackPanel>
-
-            <StackPanel x:Name="UndoHost" Spacing="8" />
-
-            <TextBlock Text="Log" Style="{StaticResource PageTitle}" FontSize="18" />
-            <Border
-                Background="{StaticResource TwSurfaceBrush}"
-                BorderBrush="{StaticResource TwLineBrush}"
-                BorderThickness="1"
-                CornerRadius="10"
-                Padding="16,8">
-                <StackPanel x:Name="LogHost" />
-            </Border>
-        </StackPanel>
         </Grid>
     </ScrollViewer>
 </Page>

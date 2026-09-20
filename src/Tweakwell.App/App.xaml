@@ -9,10 +9,10 @@
             </ResourceDictionary.MergedDictionaries>
 
             <Color x:Key="TwBg">#000000</Color>
-            <Color x:Key="TwSurface">#141414</Color>
-            <Color x:Key="TwLine">#2A2A2A</Color>
+            <Color x:Key="TwSurface">#101010</Color>
+            <Color x:Key="TwLine">#262626</Color>
             <Color x:Key="TwText">#F0EAE0</Color>
-            <Color x:Key="TwMuted">#9E9688</Color>
+            <Color x:Key="TwMuted">#968E80</Color>
             <Color x:Key="TwAmber">#D69E4A</Color>
 
             <SolidColorBrush x:Key="TwBgBrush" Color="{StaticResource TwBg}" />
@@ -24,27 +24,41 @@
 
             <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="{StaticResource TwBg}" />
             <SolidColorBrush x:Key="ContentDialogBackground" Color="{StaticResource TwSurface}" />
+            <SolidColorBrush x:Key="ContentDialogForeground" Color="{StaticResource TwText}" />
+            <SolidColorBrush x:Key="ContentDialogTopOverlay" Color="{StaticResource TwBg}" />
             <SolidColorBrush x:Key="AccentFillColorDefaultBrush" Color="{StaticResource TwAmber}" />
             <SolidColorBrush x:Key="AccentFillColorSecondaryBrush" Color="#C48B38" />
             <SolidColorBrush x:Key="AccentFillColorTertiaryBrush" Color="#A8762E" />
             <SolidColorBrush x:Key="AccentTextFillColorPrimaryBrush" Color="#000000" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="{StaticResource TwAmber}" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#C48B38" />
+            <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#A8762E" />
+            <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#000000" />
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="{StaticResource TwText}" />
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="{StaticResource TwMuted}" />
 
             <Style x:Key="NavPill" TargetType="Button">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Foreground" Value="{StaticResource TwMutedBrush}" />
-                <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="BorderBrush" Value="Transparent" />
+                <Setter Property="BorderThickness" Value="0,0,0,2" />
+                <Setter Property="Padding" Value="14,8" />
                 <Setter Property="FontSize" Value="13" />
                 <Setter Property="FontFamily" Value="Segoe UI" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
+                            <Border
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
                                 <TextBlock
                                     Text="{TemplateBinding Content}"
                                     Foreground="{TemplateBinding Foreground}"
                                     FontFamily="Segoe UI"
                                     FontSize="13"
+                                    CharacterSpacing="20"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center" />
                             </Border>
@@ -54,25 +68,27 @@
             </Style>
 
             <Style x:Key="NavPillActive" TargetType="Button" BasedOn="{StaticResource NavPill}">
-                <Setter Property="Background" Value="{StaticResource TwSurfaceBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource TwTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource TwAmberBrush}" />
             </Style>
 
             <Style x:Key="PrimaryButton" TargetType="Button">
                 <Setter Property="Background" Value="{StaticResource TwAmberBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource TwBgBrush}" />
                 <Setter Property="BorderThickness" Value="0" />
-                <Setter Property="Padding" Value="16,8" />
+                <Setter Property="Padding" Value="22,10" />
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="6">
+                            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="2">
                                 <TextBlock
                                     Text="{TemplateBinding Content}"
                                     Foreground="{TemplateBinding Foreground}"
                                     FontFamily="Segoe UI"
                                     FontWeight="SemiBold"
+                                    FontSize="13"
+                                    CharacterSpacing="30"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center" />
                             </Border>
@@ -82,7 +98,7 @@
             </Style>
 
             <Style x:Key="GhostButton" TargetType="Button">
-                <Setter Property="Background" Value="{StaticResource TwSurfaceBrush}" />
+                <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Foreground" Value="{StaticResource TwTextBrush}" />
                 <Setter Property="Padding" Value="14,8" />
                 <Setter Property="Template">
@@ -93,11 +109,12 @@
                                 BorderBrush="{StaticResource TwLineBrush}"
                                 BorderThickness="1"
                                 Padding="{TemplateBinding Padding}"
-                                CornerRadius="6">
+                                CornerRadius="2">
                                 <TextBlock
                                     Text="{TemplateBinding Content}"
                                     Foreground="{TemplateBinding Foreground}"
                                     FontFamily="Segoe UI"
+                                    FontSize="13"
                                     HorizontalAlignment="Left"
                                     VerticalAlignment="Center" />
                             </Border>
@@ -106,17 +123,33 @@
                 </Setter>
             </Style>
 
+            <Style TargetType="TextBox">
+                <Setter Property="Background" Value="{StaticResource TwSurfaceBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource TwTextBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource TwLineBrush}" />
+                <Setter Property="FontFamily" Value="Consolas" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+
             <Style x:Key="PageLead" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{StaticResource TwMutedBrush}" />
                 <Setter Property="FontSize" Value="13" />
                 <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="LineHeight" Value="20" />
                 <Setter Property="TextWrapping" Value="Wrap" />
             </Style>
 
             <Style x:Key="PageTitle" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="{StaticResource TwTextBrush}" />
-                <Setter Property="FontSize" Value="22" />
-                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontWeight" Value="Light" />
+                <Setter Property="FontFamily" Value="Segoe UI" />
+            </Style>
+
+            <Style x:Key="PageEyebrow" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource TwAmberBrush}" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="CharacterSpacing" Value="120" />
                 <Setter Property="FontFamily" Value="Segoe UI" />
             </Style>
         </ResourceDictionary>

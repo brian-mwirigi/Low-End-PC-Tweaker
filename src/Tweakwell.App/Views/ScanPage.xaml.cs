@@ -21,7 +21,9 @@ public sealed partial class ScanPage : Page
             return;
         }
 
-        LeadText.Text = "Scanning…";
+        EyebrowText.Text = "SCANNING";
+        MachineTitle.Text = "Reading this machine";
+        LeadText.Text = "WMI and powercfg. Nothing is written.";
         RefreshButton.IsEnabled = false;
         try
         {
@@ -29,7 +31,9 @@ public sealed partial class ScanPage : Page
         }
         catch (Exception ex)
         {
-            LeadText.Text = "Scan failed: " + ex.Message;
+            EyebrowText.Text = "FAILED";
+            MachineTitle.Text = "Scan stopped";
+            LeadText.Text = ex.Message;
         }
         finally
         {
@@ -39,9 +43,18 @@ public sealed partial class ScanPage : Page
 
     private void Render(ScanResult scan)
     {
-        LeadText.Text = scan.IsLaptop
-            ? "Laptop. This pass was read-only — registry, power plan, and disk are untouched."
-            : "This pass was read-only — registry, power plan, and disk are untouched.";
+        EyebrowText.Text = scan.IsLaptop ? "LAPTOP  ·  READ ONLY" : "DESKTOP  ·  READ ONLY";
+        MachineTitle.Text = string.IsNullOrWhiteSpace(scan.CpuName) ? "This machine" : scan.CpuName;
+        LeadText.Text = $"{scan.MemorySummary} installed. {scan.ProcessCount} processes. Power plan {scan.PowerPlanName}.";
+
+        var vol = scan.Volumes.FirstOrDefault(v => v.Letter.StartsWith("C", StringComparison.OrdinalIgnoreCase))
+                  ?? scan.Volumes.FirstOrDefault();
+        FillStat(StatRam, Theme.Stat(scan.MemorySummary, "RAM", "installed, not free after Chrome"));
+        FillStat(StatProc, Theme.Stat(scan.ProcessCount.ToString(), "Processes", "raw count, not Settings"));
+        FillStat(StatDisk, Theme.Stat(
+            vol is null ? "—" : FormatGb(vol.FreeBytes),
+            vol is null ? "Disk" : vol.Letter + " free",
+            vol is null ? "" : $"of {FormatGb(vol.SizeBytes)}"));
 
         FindingsHost.Children.Clear();
         foreach (var finding in scan.Findings)
@@ -69,8 +82,6 @@ public sealed partial class ScanPage : Page
         var disks = scan.Disks.Count == 0
             ? "Unknown"
             : string.Join("\n", scan.Disks.Select(d => $"{d.Name} · {Theme.Media(d.Media)}"));
-        var vol = scan.Volumes.FirstOrDefault(v => v.Letter.StartsWith("C", StringComparison.OrdinalIgnoreCase))
-                  ?? scan.Volumes.FirstOrDefault();
         var diskHint = vol is null
             ? ""
             : $"{vol.Letter} {FormatGb(vol.FreeBytes)} free of {FormatGb(vol.SizeBytes)}";
@@ -82,12 +93,12 @@ public sealed partial class ScanPage : Page
             string.IsNullOrWhiteSpace(scan.PowerPlanGuid) ? null : scan.PowerPlanGuid), 1, 1);
 
         Place(Theme.Spec(
-            "Processes",
-            scan.ProcessCount.ToString(),
-            "Raw process count, not Settings background apps."), 1, 2);
+            "Kind",
+            scan.IsLaptop ? "Laptop" : "Desktop",
+            $"{scan.ProcessCount} processes"), 1, 2);
 
         var on = scan.StartupApps.Count(a => a.Enabled);
-        StartupCount.Text = $"{scan.StartupApps.Count} listed · {on} on";
+        StartupCount.Text = $"{scan.StartupApps.Count} listed   {on} on";
         StartupHost.Children.Clear();
         foreach (var app in scan.StartupApps)
         {
@@ -98,6 +109,12 @@ public sealed partial class ScanPage : Page
         {
             StartupHost.Children.Add(Theme.Body("No startup entries found in the user Run key or Startup folder.", muted: true));
         }
+    }
+
+    private static void FillStat(StackPanel host, UIElement stat)
+    {
+        host.Children.Clear();
+        host.Children.Add(stat);
     }
 
     private void Place(Border card, int row, int column)

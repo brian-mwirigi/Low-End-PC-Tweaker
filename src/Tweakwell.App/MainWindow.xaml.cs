@@ -15,7 +15,7 @@ public sealed partial class MainWindow : Window
         Title = "Tweakwell";
         try
         {
-            AppWindow?.Resize(new SizeInt32(1180, 800));
+            AppWindow?.Resize(new SizeInt32(1280, 860));
         }
         catch (Exception)
         {
@@ -46,10 +46,10 @@ public sealed partial class MainWindow : Window
         PaintNav();
         ShellNote.Text = tag switch
         {
-            "scan" => "Scan changes nothing",
-            "tweaks" => "Nothing writes until you confirm",
-            "history" => "Undo from the last backup",
-            "about" => "No telemetry · no ads",
+            "scan" => "read only",
+            "tweaks" => "writes after preview",
+            "history" => "local backups",
+            "about" => "no telemetry",
             _ => "",
         };
 

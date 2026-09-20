@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <RootNamespace>Tweakwell</RootNamespace>
+    <Description>Scan, preview, apply, and undo engine for Tweakwell. No UI types.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="9.0.8" />
+  </ItemGroup>
+</Project>

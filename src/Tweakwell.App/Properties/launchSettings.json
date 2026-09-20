@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Tweakwell": {
+      "commandName": "Project",
+      "nativeDebugging": false
+    }
+  }
+}

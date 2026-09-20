@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Test
+        run: dotnet test tests/Tweakwell.Tests/Tweakwell.Tests.csproj -c Release --nologo
+
+      - name: Publish app
+        run: >
+          dotnet publish src/Tweakwell.App/Tweakwell.App.csproj
+          -c Release
+          -r win-x64
+          -p:Platform=x64
+          --self-contained
+          -o artifacts/publish/win-x64
+
+      - name: Publish elevated helper
+        run: >
+          dotnet publish src/Tweakwell.Elevated/Tweakwell.Elevated.csproj
+          -c Release
+          -r win-x64
+          --self-contained
+          -o artifacts/publish/elevated
+
+      - name: Stage release folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force artifacts/release | Out-Null
+          Copy-Item artifacts/publish/win-x64/Tweakwell.exe artifacts/release/Tweakwell.exe
+          Copy-Item artifacts/publish/elevated/Tweakwell.Elevated.exe artifacts/release/Tweakwell.Elevated.exe
+          Get-FileHash artifacts/release/Tweakwell.exe -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Tweakwell.exe" } |
+            Set-Content artifacts/release/SHA256SUMS.txt
+          Get-FileHash artifacts/release/Tweakwell.Elevated.exe -Algorithm SHA256 |
+            ForEach-Object { "$($_.Hash.ToLower())  Tweakwell.Elevated.exe" } |
+            Add-Content artifacts/release/SHA256SUMS.txt
+          Get-Content artifacts/release/SHA256SUMS.txt
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tweakwell-win-x64
+          path: artifacts/release/*
+
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            ## Checksums
+
+            SHA-256 hashes are in `SHA256SUMS.txt`. After you upload the exe to VirusTotal, paste the link here.
+
+            ## Tip
+
+            [Buy Me a Coffee](https://buymeacoffee.com/brianmwirigi)
+
+            Windows SmartScreen may warn on this unsigned exe. The source is this repository.
+          files: |
+            artifacts/release/Tweakwell.exe
+            artifacts/release/Tweakwell.Elevated.exe
+            artifacts/release/SHA256SUMS.txt

@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Deterministic>true</Deterministic>
+    <Company>Brian Munene Mwirigi</Company>
+    <Product>Tweakwell</Product>
+    <Authors>Brian Munene Mwirigi</Authors>
+    <Copyright>Copyright (c) 2026 Brian Munene Mwirigi</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+</Project>

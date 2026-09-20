@@ -77,18 +77,14 @@
                 <Setter Property="Foreground" Value="{StaticResource TwBgBrush}" />
                 <Setter Property="BorderThickness" Value="0" />
                 <Setter Property="Padding" Value="22,10" />
+                <Setter Property="FontFamily" Value="Segoe UI" />
+                <Setter Property="FontSize" Value="13" />
                 <Setter Property="FontWeight" Value="SemiBold" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="2">
-                                <TextBlock
-                                    Text="{TemplateBinding Content}"
-                                    Foreground="{TemplateBinding Foreground}"
-                                    FontFamily="Segoe UI"
-                                    FontWeight="SemiBold"
-                                    FontSize="13"
-                                    CharacterSpacing="30"
+                                <ContentPresenter
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center" />
                             </Border>

@@ -30,8 +30,12 @@
             BorderBrush="{StaticResource TwLineBrush}"
             BorderThickness="0,1,0,0"
             Padding="28,16">
-            <Grid MaxWidth="1040" HorizontalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="14">
+            <Grid MaxWidth="1040" HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
                     <Button
                         x:Name="PreviewButton"
                         Content="Preview selected"
@@ -51,8 +55,9 @@
                 </StackPanel>
                 <TextBlock
                     x:Name="SelectedCount"
-                    HorizontalAlignment="Right"
+                    Grid.Column="1"
                     VerticalAlignment="Center"
+                    Margin="20,0,0,0"
                     FontFamily="Consolas"
                     FontSize="12"
                     Foreground="{StaticResource TwMutedBrush}"
